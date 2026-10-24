@@ -2,121 +2,135 @@ import { useCallback, useEffect, useState } from 'react';
 import { taskApi } from './api/taskApi';
 import TaskForm from './components/TaskForm';
 import FilterBar from './components/FilterBar';
-import TaskList from './components/TaskList';
+import TaskBoard from './components/TaskBoard';
+import EditTaskModal from './components/EditTaskModal';
 import './App.css';
 
 export default function App() {
   const [tasks, setTasks] = useState([]);
-  const [filter, setFilter] = useState('all');
+  const [summary, setSummary] = useState(null);
   const [search, setSearch] = useState('');
+  const [priority, setPriority] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [toast, setToast] = useState(null);
+  const [editing, setEditing] = useState(null);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
-    setTimeout(() => setToast(null), 2500);
+    setTimeout(() => setToast(null), 3000);
   };
 
-  const loadTasks = useCallback(async () => {
+  const refresh = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const data = search.trim()
-        ? await taskApi.search(search.trim())
-        : await taskApi.getAll();
-      setTasks(data);
+      const [page, stats] = await Promise.all([
+        taskApi.list({ search, priority }),
+        taskApi.summary(),
+      ]);
+      setTasks(page.content);
+      setSummary(stats);
     } catch (err) {
-      setError(`Could not reach the API: ${err.message}`);
+      setError(`Could not load tasks: ${err.message}`);
     } finally {
       setLoading(false);
     }
-  }, [search]);
+  }, [search, priority]);
 
+  // Debounced reload when search or priority changes
   useEffect(() => {
-    const timer = setTimeout(loadTasks, 300);
+    const timer = setTimeout(refresh, 300);
     return () => clearTimeout(timer);
-  }, [loadTasks]);
+  }, [refresh]);
 
-  async function handleCreate(task) {
+  async function run(action, successMessage) {
     try {
-      await taskApi.create(task);
-      showToast('Task created');
-      loadTasks();
+      await action();
+      showToast(successMessage);
+      refresh();
     } catch (err) {
       showToast(err.message, 'error');
     }
   }
 
-  async function handleToggle(id, completed) {
-    try {
-      await taskApi.update(id, { completed });
-      showToast('Task updated');
-      loadTasks();
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
-  }
+  const handleCreate = (task) => run(() => taskApi.create(task), 'Task created');
 
-  async function handleEdit(id, changes) {
-    try {
-      await taskApi.update(id, changes);
-      showToast('Task saved');
-      loadTasks();
-    } catch (err) {
-      showToast(err.message, 'error');
-    }
-  }
+  const handleMove = (id, status) =>
+    run(() => taskApi.update(id, { status }), 'Task moved');
 
-  async function handleDelete(id) {
+  const handleEdit = (id, changes) => {
+    setEditing(null);
+    return run(() => taskApi.update(id, changes), 'Task saved');
+  };
+
+  const handleDelete = (id) => {
     if (!window.confirm('Delete this task?')) return;
+    run(() => taskApi.remove(id), 'Task deleted');
+  };
+
+  const handleRollover = async () => {
     try {
-      await taskApi.remove(id);
-      showToast('Task deleted');
-      loadTasks();
+      const { rolledOver } = await taskApi.rollover();
+      showToast(`${rolledOver} overdue task(s) moved to today`);
+      refresh();
     } catch (err) {
       showToast(err.message, 'error');
     }
-  }
+  };
 
-  const visibleTasks = tasks.filter((task) => {
-    if (filter === 'all') return true;
-    return filter === 'completed' ? !!task.completed : !task.completed;
-  });
+  const stats = summary && [
+    ['Total', summary.total],
+    ['To Do', summary.todo],
+    ['In Progress', summary.inProgress],
+    ['Done', summary.done],
+    ['Overdue', summary.overdue],
+  ];
 
   return (
-    <div className="container">
-      <header>
-        <h1>📝 Task Manager</h1>
-        <p className="subtitle">Stay on top of your work</p>
+    <div className="app">
+      <header className="topbar">
+        <div className="brand">✅ TaskFlow</div>
+        <FilterBar
+          search={search}
+          onSearch={setSearch}
+          priority={priority}
+          onPriority={setPriority}
+        />
       </header>
+
+      <div className="summary">
+        {stats?.map(([label, value]) => (
+          <div className="stat" key={label}>
+            <span>{value}</span>
+            {label}
+          </div>
+        ))}
+        <button onClick={handleRollover}>Roll over overdue</button>
+      </div>
 
       <TaskForm onCreate={handleCreate} />
 
-      <section className="card">
-        <div className="section-header">
-          <h2>Your tasks</h2>
-          <span className="counter">
-            {visibleTasks.length} task{visibleTasks.length === 1 ? '' : 's'}
-          </span>
-        </div>
+      {error && <div className="banner error">{error}</div>}
 
-        <FilterBar
-          filter={filter}
-          onChange={setFilter}
-          search={search}
-          onSearchChange={setSearch}
-        />
-
-        <TaskList
-          tasks={visibleTasks}
-          loading={loading}
-          error={error}
-          onToggle={handleToggle}
+      {loading && tasks.length === 0 ? (
+        <p className="empty">Loading…</p>
+      ) : (
+        <TaskBoard
+          tasks={tasks}
+          onMove={handleMove}
           onDelete={handleDelete}
-          onEdit={handleEdit}
+          onEdit={setEditing}
         />
-      </section>
+      )}
+
+      {editing && (
+        <EditTaskModal
+          task={editing}
+          onSave={handleEdit}
+          onClose={() => setEditing(null)}
+        />
+      )}
 
       {toast && <div className={`toast ${toast.type}`}>{toast.message}</div>}
     </div>

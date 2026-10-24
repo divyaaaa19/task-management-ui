@@ -1,31 +1,18 @@
-const FILTERS = [
-  { value: 'all', label: 'All' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'completed', label: 'Completed' },
-];
-
-export default function FilterBar({ filter, onChange, search, onSearchChange }) {
+export default function FilterBar({ search, onSearch, priority, onPriority }) {
   return (
-    <>
-      <div className="filter-buttons">
-        {FILTERS.map((f) => (
-          <button
-            key={f.value}
-            className={`btn btn-filter ${filter === f.value ? 'active' : ''}`}
-            onClick={() => onChange(f.value)}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-
+    <div className="filters">
       <input
         type="search"
-        className="search-input"
-        placeholder="Search by title..."
+        placeholder="Search tasks"
         value={search}
-        onChange={(e) => onSearchChange(e.target.value)}
+        onChange={(e) => onSearch(e.target.value)}
       />
-    </>
+      <select value={priority} onChange={(e) => onPriority(e.target.value)}>
+        <option value="">All priorities</option>
+        <option value="HIGH">High</option>
+        <option value="MEDIUM">Medium</option>
+        <option value="LOW">Low</option>
+      </select>
+    </div>
   );
 }

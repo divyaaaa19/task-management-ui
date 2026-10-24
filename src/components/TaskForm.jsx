@@ -1,47 +1,41 @@
 import { useState } from 'react';
 
+const EMPTY = { title: '', description: '', priority: 'MEDIUM', dueDate: '' };
+
 export default function TaskForm({ onCreate }) {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const [form, setForm] = useState(EMPTY);
 
-  async function handleSubmit(e) {
+  const set = (field) => (e) =>
+    setForm((f) => ({ ...f, [field]: e.target.value }));
+
+  function submit(e) {
     e.preventDefault();
-    const trimmed = title.trim();
-    if (!trimmed) return;
-
-    setSubmitting(true);
-    try {
-      await onCreate({ title: trimmed, description: description.trim() });
-      setTitle('');
-      setDescription('');
-    } finally {
-      setSubmitting(false);
-    }
+    if (!form.title.trim() || !form.dueDate) return;
+    onCreate({ ...form, title: form.title.trim() });
+    setForm(EMPTY);
   }
 
   return (
-    <section className="card">
-      <h2>Create a task</h2>
-      <form className="task-form" onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Task title"
-          maxLength={200}
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-        />
-        <textarea
-          placeholder="Description (optional)"
-          rows={3}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-        <button type="submit" className="btn btn-primary" disabled={submitting}>
-          {submitting ? 'Adding...' : 'Add task'}
-        </button>
-      </form>
-    </section>
+    <form className="task-form" onSubmit={submit}>
+      <input
+        placeholder="Task title"
+        value={form.title}
+        onChange={set('title')}
+        maxLength={100}
+        required
+      />
+      <input
+        placeholder="Description (optional)"
+        value={form.description}
+        onChange={set('description')}
+      />
+      <select value={form.priority} onChange={set('priority')}>
+        <option value="LOW">Low</option>
+        <option value="MEDIUM">Medium</option>
+        <option value="HIGH">High</option>
+      </select>
+      <input type="date" value={form.dueDate} onChange={set('dueDate')} required />
+      <button type="submit">Add task</button>
+    </form>
   );
 }
