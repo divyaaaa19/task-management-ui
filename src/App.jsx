@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
-import { taskApi } from './api/taskApi';
-import TaskForm from './components/TaskForm';
-import FilterBar from './components/FilterBar';
+import { taskApi, session } from './api/taskApi';
+import AuthPage from './components/AuthPage';
+import Sidebar from './components/Sidebar';
 import TaskBoard from './components/TaskBoard';
-import EditTaskModal from './components/EditTaskModal';
+import TaskModal from './components/TaskModal';
 import './App.css';
 
 export default function App() {
+  const [auth, setAuth] = useState(() => session.get());
   const [tasks, setTasks] = useState([]);
   const [summary, setSummary] = useState(null);
   const [search, setSearch] = useState('');
@@ -14,14 +15,28 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [toast, setToast] = useState(null);
-  const [editing, setEditing] = useState(null);
+  const [modal, setModal] = useState(null); // { status } to create, { task } to edit
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
 
+  const logout = useCallback(() => {
+    session.clear();
+    setAuth(null);
+    setTasks([]);
+    setSummary(null);
+  }, []);
+
+  // Set by the API layer when a saved token is rejected
+  useEffect(() => {
+    window.addEventListener('session-expired', logout);
+    return () => window.removeEventListener('session-expired', logout);
+  }, [logout]);
+
   const refresh = useCallback(async () => {
+    if (!auth) return;
     setLoading(true);
     setError('');
     try {
@@ -36,33 +51,32 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  }, [search, priority]);
+  }, [auth, search, priority]);
 
-  // Debounced reload when search or priority changes
   useEffect(() => {
     const timer = setTimeout(refresh, 300);
     return () => clearTimeout(timer);
   }, [refresh]);
 
-  async function run(action, successMessage) {
+  async function run(action, message) {
     try {
       await action();
-      showToast(successMessage);
+      showToast(message);
       refresh();
     } catch (err) {
       showToast(err.message, 'error');
     }
   }
 
-  const handleCreate = (task) => run(() => taskApi.create(task), 'Task created');
+  const handleSave = (id, data) => {
+    setModal(null);
+    return id
+      ? run(() => taskApi.update(id, data), 'Task saved')
+      : run(() => taskApi.create(data), 'Task created');
+  };
 
   const handleMove = (id, status) =>
     run(() => taskApi.update(id, { status }), 'Task moved');
-
-  const handleEdit = (id, changes) => {
-    setEditing(null);
-    return run(() => taskApi.update(id, changes), 'Task saved');
-  };
 
   const handleDelete = (id) => {
     if (!window.confirm('Delete this task?')) return;
@@ -79,6 +93,17 @@ export default function App() {
     }
   };
 
+  if (!auth) {
+    return (
+      <AuthPage
+        onAuthenticated={(res) => {
+          session.save(res);
+          setAuth(session.get());
+        }}
+      />
+    );
+  }
+
   const stats = summary && [
     ['Total', summary.total],
     ['To Do', summary.todo],
@@ -88,47 +113,63 @@ export default function App() {
   ];
 
   return (
-    <div className="app">
-      <header className="topbar">
-        <div className="brand">✅ TaskFlow</div>
-        <FilterBar
-          search={search}
-          onSearch={setSearch}
-          priority={priority}
-          onPriority={setPriority}
-        />
-      </header>
+    <div className="layout">
+      <Sidebar
+        user={auth.user}
+        search={search}
+        onSearch={setSearch}
+        onLogout={logout}
+      />
 
-      <div className="summary">
-        {stats?.map(([label, value]) => (
-          <div className="stat" key={label}>
-            <span>{value}</span>
-            {label}
+      <main className="main">
+        <header className="page-header">
+          <h1>Tasks</h1>
+          <div className="page-actions">
+            <select value={priority} onChange={(e) => setPriority(e.target.value)}>
+              <option value="">All priorities</option>
+              <option value="HIGH">High</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="LOW">Low</option>
+            </select>
+            <button className="outline" onClick={handleRollover}>Roll over overdue</button>
+            <button className="primary" onClick={() => setModal({ status: 'TODO' })}>
+              + Add Task
+            </button>
           </div>
-        ))}
-        <button onClick={handleRollover}>Roll over overdue</button>
-      </div>
+        </header>
 
-      <TaskForm onCreate={handleCreate} />
+        {stats && (
+          <div className="summary">
+            {stats.map(([label, value]) => (
+              <div className="stat" key={label}>
+                <span>{value}</span>
+                {label}
+              </div>
+            ))}
+          </div>
+        )}
 
-      {error && <div className="banner error">{error}</div>}
+        {error && <div className="banner error">{error}</div>}
 
-      {loading && tasks.length === 0 ? (
-        <p className="empty">Loading…</p>
-      ) : (
-        <TaskBoard
-          tasks={tasks}
-          onMove={handleMove}
-          onDelete={handleDelete}
-          onEdit={setEditing}
-        />
-      )}
+        {loading && tasks.length === 0 ? (
+          <p className="muted">Loading…</p>
+        ) : (
+          <TaskBoard
+            tasks={tasks}
+            onMove={handleMove}
+            onAdd={(status) => setModal({ status })}
+            onEdit={(task) => setModal({ task })}
+            onDelete={handleDelete}
+          />
+        )}
+      </main>
 
-      {editing && (
-        <EditTaskModal
-          task={editing}
-          onSave={handleEdit}
-          onClose={() => setEditing(null)}
+      {modal && (
+        <TaskModal
+          task={modal.task}
+          defaultStatus={modal.status}
+          onSave={(data) => handleSave(modal.task?.id, data)}
+          onClose={() => setModal(null)}
         />
       )}
 
