@@ -5,6 +5,7 @@ import Sidebar from './components/Sidebar';
 import TaskBoard from './components/TaskBoard';
 import TaskModal from './components/TaskModal';
 import './App.css';
+import ProfileModal from './components/ProfileModal';
 
 export default function App() {
   const [auth, setAuth] = useState(() => session.get());
@@ -16,6 +17,7 @@ export default function App() {
   const [error, setError] = useState('');
   const [toast, setToast] = useState(null);
   const [modal, setModal] = useState(null); // { status } to create, { task } to edit
+  const [showProfile, setShowProfile] = useState(false);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -119,6 +121,7 @@ export default function App() {
         search={search}
         onSearch={setSearch}
         onLogout={logout}
+        onOpenProfile={() => setShowProfile(true)}
       />
 
       <main className="main">
@@ -174,6 +177,16 @@ export default function App() {
       )}
 
       {toast && <div className={`toast ${toast.type}`}>{toast.message}</div>}
+
+      {showProfile && (
+        <ProfileModal
+          onClose={() => setShowProfile(false)}
+          onUpdated={(user) => {
+            session.setUser(user);
+            setAuth(session.get());
+          }}
+        />
+      )}
     </div>
   );
 }

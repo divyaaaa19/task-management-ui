@@ -1,4 +1,4 @@
-export default function Sidebar({ user, search, onSearch, onLogout }) {
+export default function Sidebar({ user, search, onSearch, onLogout, onOpenProfile }) {
   const initials = user.name
     .split(' ')
     .map((part) => part[0])
@@ -26,11 +26,13 @@ export default function Sidebar({ user, search, onSearch, onLogout }) {
       </nav>
 
       <div className="sidebar-footer">
-        <div className="avatar">{initials}</div>
-        <div className="user">
-          <strong>{user.name}</strong>
-          <small>{user.email}</small>
-        </div>
+        <button className="profile-btn" onClick={onOpenProfile} aria-label="Open profile">
+          <div className="avatar">{initials}</div>
+          <div className="user">
+            <strong>{user.name}</strong>
+            <small>{user.email}</small>
+          </div>
+        </button>
         <button className="link" onClick={onLogout}>Log out</button>
       </div>
     </aside>

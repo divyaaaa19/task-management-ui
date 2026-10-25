@@ -1,5 +1,7 @@
-const API_BASE = import.meta.env.VITE_API_URL;                 // https://.../api/tasks
-const AUTH_BASE = API_BASE.replace(/\/tasks\/?$/, '/auth');    // https://.../api/auth
+const API_ROOT = import.meta.env.VITE_API_URL.replace(/\/tasks\/?$/, ''); // https://.../api
+const API_BASE = `${API_ROOT}/tasks`;
+const AUTH_BASE = `${API_ROOT}/auth`;
+const PROFILE_BASE = `${API_ROOT}/users/me`;   // https://.../api/auth
 
 const TOKEN_KEY = 'taskflow_token';
 const USER_KEY = 'taskflow_user';
@@ -17,6 +19,13 @@ export const session = {
   save({ token, name, email }) {
     try {
       localStorage.setItem(TOKEN_KEY, token);
+      localStorage.setItem(USER_KEY, JSON.stringify({ name, email }));
+    } catch {
+      // storage unavailable
+    }
+  },
+  setUser({ name, email }) {
+    try {
       localStorage.setItem(USER_KEY, JSON.stringify({ name, email }));
     } catch {
       // storage unavailable
@@ -64,10 +73,14 @@ async function request(url, options = {}) {
 }
 
 export const authApi = {
-  login: (credentials) =>
-    request(`${AUTH_BASE}/login`, { method: 'POST', body: JSON.stringify(credentials) }),
+  login: (data) =>
+    request(`${AUTH_BASE}/login`, { method: 'POST', body: JSON.stringify(data) }),
   register: (data) =>
     request(`${AUTH_BASE}/register`, { method: 'POST', body: JSON.stringify(data) }),
+  forgotPassword: (data) =>
+    request(`${AUTH_BASE}/forgot-password`, { method: 'POST', body: JSON.stringify(data) }),
+  resetPassword: (data) =>
+    request(`${AUTH_BASE}/reset-password`, { method: 'POST', body: JSON.stringify(data) }),
 };
 
 export const taskApi = {
@@ -83,4 +96,9 @@ export const taskApi = {
     request(`${API_BASE}/${id}`, { method: 'PUT', body: JSON.stringify(changes) }),
   remove: (id) => request(`${API_BASE}/${id}`, { method: 'DELETE' }),
   rollover: () => request(`${API_BASE}/rollover`, { method: 'POST' }),
+};
+
+export const profileApi = {
+  get: () => request(PROFILE_BASE),
+  update: (data) => request(PROFILE_BASE, { method: 'PUT', body: JSON.stringify(data) }),
 };
