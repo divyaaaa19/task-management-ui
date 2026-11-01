@@ -102,3 +102,30 @@ export const profileApi = {
   get: () => request(PROFILE_BASE),
   update: (data) => request(PROFILE_BASE, { method: 'PUT', body: JSON.stringify(data) }),
 };
+
+// Admin API: manage any user's tasks. The server enforces the ADMIN role.
+const ADMIN_BASE = `${API_ROOT}/admin`;
+
+// Reads the role from the JWT payload for showing UI only. The server still checks it.
+export function roleFromToken(token) {
+  try {
+    const payload = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(atob(payload)).role || 'USER';
+  } catch {
+    return 'USER';
+  }
+}
+
+export const adminApi = {
+  users: () => request(`${ADMIN_BASE}/users`),
+  tasks: (userId) => request(`${ADMIN_BASE}/users/${userId}/tasks?size=100`),
+  create: (userId, task) =>
+    request(`${ADMIN_BASE}/users/${userId}/tasks`, { method: 'POST', body: JSON.stringify(task) }),
+  update: (userId, taskId, changes) =>
+    request(`${ADMIN_BASE}/users/${userId}/tasks/${taskId}`, {
+      method: 'PUT',
+      body: JSON.stringify(changes),
+    }),
+  remove: (userId, taskId) =>
+    request(`${ADMIN_BASE}/users/${userId}/tasks/${taskId}`, { method: 'DELETE' }),
+};

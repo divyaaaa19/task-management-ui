@@ -1,4 +1,4 @@
-export default function Sidebar({ user, search, onSearch, onLogout, onOpenProfile }) {
+export default function Sidebar({ user, search, onSearch, onLogout, onOpenProfile, view, onView, isAdmin }) {
   const initials = user.name
     .split(' ')
     .map((part) => part[0])
@@ -22,7 +22,20 @@ export default function Sidebar({ user, search, onSearch, onLogout, onOpenProfil
 
       <div className="menu-label">MAIN MENU</div>
       <nav>
-        <div className="nav-item active">Tasks</div>
+        <button
+          className={`nav-item ${view === 'tasks' ? 'active' : ''}`}
+          onClick={() => onView('tasks')}
+        >
+          Tasks
+        </button>
+        {isAdmin && (
+          <button
+            className={`nav-item ${view === 'admin' ? 'active' : ''}`}
+            onClick={() => onView('admin')}
+          >
+            Users (Admin)
+          </button>
+        )}
       </nav>
 
       <div className="sidebar-footer">

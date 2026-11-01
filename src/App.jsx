@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
-import { taskApi, session } from './api/taskApi';
+import { taskApi, session, roleFromToken } from './api/taskApi';
 import AuthPage from './components/AuthPage';
 import Sidebar from './components/Sidebar';
 import TaskBoard from './components/TaskBoard';
 import TaskModal from './components/TaskModal';
 import './App.css';
 import ProfileModal from './components/ProfileModal';
+import AdminPanel from './components/AdminPanel';
 
 export default function App() {
   const [auth, setAuth] = useState(() => session.get());
@@ -18,6 +19,7 @@ export default function App() {
   const [toast, setToast] = useState(null);
   const [modal, setModal] = useState(null); // { status } to create, { task } to edit
   const [showProfile, setShowProfile] = useState(false);
+  const [view, setView] = useState('tasks'); // 'tasks' or 'admin'
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -106,6 +108,9 @@ export default function App() {
     );
   }
 
+  const isAdmin = roleFromToken(auth.token) === 'ADMIN';
+  const showAdmin = isAdmin && view === 'admin';
+
   const stats = summary && [
     ['Total', summary.total],
     ['To Do', summary.todo],
@@ -122,9 +127,16 @@ export default function App() {
         onSearch={setSearch}
         onLogout={logout}
         onOpenProfile={() => setShowProfile(true)}
+        view={view}
+        onView={setView}
+        isAdmin={isAdmin}
       />
 
       <main className="main">
+        {showAdmin ? (
+          <AdminPanel onToast={showToast} />
+        ) : (
+          <>
         <header className="page-header">
           <h1>Tasks</h1>
           <div className="page-actions">
@@ -164,6 +176,8 @@ export default function App() {
             onEdit={(task) => setModal({ task })}
             onDelete={handleDelete}
           />
+        )}
+          </>
         )}
       </main>
 
