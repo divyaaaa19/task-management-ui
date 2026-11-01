@@ -652,3 +652,61 @@ button.nav-item {
 @media (max-width: 760px) {
   .admin { grid-template-columns: 1fr; }
 }
+
+/* Admin: header, user summary and empty state */
+.subtitle {
+  margin: 4px 0 0;
+  color: #6b7280;
+  font-size: .9rem;
+}
+.admin { grid-template-columns: 300px 1fr; }
+.user-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.chip {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f1f3f8;
+  color: #4b5563;
+  font-size: .72rem;
+  font-weight: 600;
+}
+.chip.overdue { background: #fef2f2; color: #dc2626; }
+.user-hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  margin-bottom: 16px;
+  background: #fff;
+  border: 1px solid #e6e9f2;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, .04);
+}
+.user-hero-text { min-width: 0; }
+.user-hero-text h2 { margin: 0; font-size: 1.2rem; }
+.user-hero-text small {
+  color: #6b7280;
+  overflow-wrap: anywhere;
+}
+.user-hero .page-actions { margin-left: auto; }
+.empty-state {
+  padding: 56px 24px;
+  text-align: center;
+  color: #6b7280;
+  background: #fff;
+  border: 1px dashed #cdd3e1;
+  border-radius: 16px;
+}
+.empty-state h2 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  color: #1c2233;
+}
+.empty-state p { margin: 0; }
+@media (max-width: 900px) {
+  .admin { grid-template-columns: 1fr; }
+}
