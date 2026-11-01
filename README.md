@@ -1,16 +1,58 @@
-# React + Vite
+# TaskFlow UI
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React front end for TaskFlow, a task manager with a Kanban board, password reset, and an admin view for managing any user's tasks.
 
-Currently, two official plugins are available:
+- **Live app:** https://task-management-ui-80z2.onrender.com
+- **API:** https://task-management-api-q0h7.onrender.com (see the API repo's README)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Features
 
-## React Compiler
+- Sign up and log in with an email address or mobile number
+- Forgot password: a reset link is emailed, and the reset page sets a new password
+- Kanban board with To Do, In Progress, and Done columns. Drag tasks between columns.
+- Create, edit, and delete tasks. Search and filter by priority.
+- Summary counts, including overdue tasks, and a button to roll overdue tasks over to today
+- Profile editing
+- Admin view: pick any user, then create, edit, move, or delete their tasks. Add one task to all users at once.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech stack
 
-## Expanding the ESLint configuration
+React 19 · Vite 8 · plain CSS · Fetch API
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Running locally
+
+Requirements: Node.js 22.
+
+```bash
+npm install
+```
+
+Create a file named `.env.local` in the project root with this line:
+
+```
+VITE_API_URL=http://localhost:8080/api/tasks
+```
+
+Then start the dev server:
+
+```bash
+npm run dev
+```
+
+The app runs at http://localhost:5173. Make sure the API is running and its `CORS_ALLOWED_ORIGINS` includes that address.
+
+Build for production with:
+
+```bash
+npm run build
+```
+
+## Configuration
+
+| Variable | Purpose |
+|---|---|
+| `VITE_API_URL` | Full URL of the API's `/api/tasks` endpoint. Vite reads this at build time, so rebuild after changing it. |
+
+## Deployment
+
+The UI is a static site on Render. Use `npm run build` as the build command and `dist` as the publish directory. Set `VITE_API_URL` to the live API's `/api/tasks` URL. Pull requests run the build in GitHub Actions.
