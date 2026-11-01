@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export default function TaskModal({ task, defaultStatus = 'TODO', onSave, onClose }) {
+export default function TaskModal({ task, defaultStatus = 'TODO', onSave, onClose, heading, submitLabel }) {
   const [form, setForm] = useState({
     title: task?.title ?? '',
     description: task?.description ?? '',
@@ -20,7 +20,7 @@ export default function TaskModal({ task, defaultStatus = 'TODO', onSave, onClos
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <form className="modal" onClick={(e) => e.stopPropagation()} onSubmit={submit}>
-        <h2>{task ? 'Edit task' : 'New task'}</h2>
+        <h2>{heading ?? (task ? 'Edit task' : 'New task')}</h2>
 
         <label>
           Title
@@ -60,7 +60,7 @@ export default function TaskModal({ task, defaultStatus = 'TODO', onSave, onClos
         <div className="modal-actions">
           <button type="button" className="secondary" onClick={onClose}>Cancel</button>
           <button type="submit" className="primary">
-            {task ? 'Save' : 'Create task'}
+            {submitLabel ?? (task ? 'Save' : 'Create task')}
           </button>
         </div>
       </form>
