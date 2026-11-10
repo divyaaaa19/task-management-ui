@@ -1,10 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import App from './App';
-import { adminApi, profileApi, roleFromToken, session, taskApi } from './api/taskApi';
+import App from '../App';
+import { adminApi, profileApi, roleFromToken, session, taskApi } from '../api/taskApi';
 
-vi.mock('./api/taskApi', () => ({
+vi.mock('../api/taskApi', () => ({
   session: { get: vi.fn(), save: vi.fn(), setUser: vi.fn(), clear: vi.fn() },
   roleFromToken: vi.fn(),
   authApi: { login: vi.fn(), register: vi.fn(), forgotPassword: vi.fn(), resetPassword: vi.fn() },
@@ -44,13 +44,14 @@ describe('App', () => {
     expect(taskApi.list).not.toHaveBeenCalled();
   });
 
-  it('shows the task list and summary for a signed-in user', async () => {
+   it('shows the task list and summary for a signed-in user', async () => {
     loginAs('USER');
 
     render(<App />);
 
     expect(await screen.findByText('Write docs')).toBeInTheDocument();
-    expect(screen.getByText('To Do')).toBeInTheDocument();
+    const summaryBox = document.querySelector('.summary');
+    expect(within(summaryBox).getByText('To Do')).toBeInTheDocument();
     expect(taskApi.list).toHaveBeenCalled();
   });
 

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import ProfileModal from './ProfileModal';
+import ProfileModal from '../components/ProfileModal';
 import { profileApi } from '../api/taskApi';
 
 vi.mock('../api/taskApi', () => ({

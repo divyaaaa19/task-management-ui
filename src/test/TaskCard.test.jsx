@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import TaskCard from './TaskCard';
+import TaskCard from '../components/TaskCard';
 
 const task = {
   id: 'task-12345',

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import AuthPage from './AuthPage';
+import AuthPage from '../components/AuthPage';
 import { authApi } from '../api/taskApi';
 
 vi.mock('../api/taskApi', () => ({

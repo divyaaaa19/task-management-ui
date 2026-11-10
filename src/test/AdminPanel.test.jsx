@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import AdminPanel from './AdminPanel';
+import AdminPanel from '../components/AdminPanel';
 import { adminApi } from '../api/taskApi';
 
 vi.mock('../api/taskApi', () => ({

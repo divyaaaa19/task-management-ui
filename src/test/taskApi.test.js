@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // Loads a fresh copy of the module so it reads the stubbed VITE_API_URL
 async function loadApi() {
   vi.resetModules();
-  return import('./taskApi');
+  return import('../api/taskApi');
 }
 
 // Builds a JWT-shaped token whose payload carries the given claims

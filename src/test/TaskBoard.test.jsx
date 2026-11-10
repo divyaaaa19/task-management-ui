@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import TaskBoard from './TaskBoard';
+import TaskBoard from '../components/TaskBoard';
 
 const tasks = [
   {
