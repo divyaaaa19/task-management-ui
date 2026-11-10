@@ -3,6 +3,9 @@ import { adminApi } from '../api/taskApi';
 import TaskBoard from './TaskBoard';
 import TaskModal from './TaskModal';
 import ProgressBar from './ProgressBar';
+import ConfirmDialog from './ConfirmDialog';
+import TaskSkeleton from './TaskSkeleton';
+import useUndoableDelete from '../hooks/useUndoableDelete';
 
 // Gives each user a stable color, so the same person always gets the same avatar
 function avatarColor(name = '') {
@@ -46,7 +49,10 @@ export default function AdminPanel({ onToast }) {
   const [error, setError] = useState('');
   const [modal, setModal] = useState(null); // { status } to create, { task } to edit
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [pendingBulk, setPendingBulk] = useState(null); // task data waiting for confirmation
+  const [confirmTask, setConfirmTask] = useState(null);
   const [busy, setBusy] = useState(false);
+  const deletion = useUndoableDelete(onToast);
 
   // Loads every user's tasks once so each card can show its counts
   const loadStats = useCallback(async (list) => {
@@ -116,15 +122,33 @@ export default function AdminPanel({ onToast }) {
   const handleMove = (id, status) =>
     run(() => adminApi.update(selected.id, id, { status }), 'Task moved');
 
+  // Asks first; the delete waits in the undo window after confirming
   const handleDelete = (id) => {
-    if (!window.confirm('Delete this task?')) return;
-    run(() => adminApi.remove(selected.id, id), 'Task deleted');
+    const task = tasks.find((t) => t.id === id);
+    if (task) setConfirmTask(task);
   };
 
-  // Creates the same task for every user, one request per user
-  async function addToAllUsers(data) {
+  const confirmDelete = () => {
+    const task = confirmTask;
+    const userId = selected.id;
+    setConfirmTask(null);
+    deletion.scheduleDelete({
+      task,
+      remove: (t) => adminApi.remove(userId, t.id),
+      onDone: () => loadTasks(userId),
+    });
+  };
+
+  // Asks before creating the task for everyone
+  function addToAllUsers(data) {
     setBulkOpen(false);
-    if (!window.confirm(`Create "${data.title}" for all ${users.length} users?`)) return;
+    setPendingBulk(data);
+  }
+
+  // Creates the same task for every user, one request per user
+  async function confirmBulk() {
+    const data = pendingBulk;
+    setPendingBulk(null);
 
     setBusy(true);
     let ok = 0;
@@ -152,6 +176,7 @@ export default function AdminPanel({ onToast }) {
     (u) => !search || `${u.name} ${u.email}`.toLowerCase().includes(search),
   );
   const selectedSummary = summarize(tasks);
+  const visibleTasks = tasks.filter((t) => !deletion.hiddenIds.has(t.id));
 
   return (
     <>
@@ -181,7 +206,8 @@ export default function AdminPanel({ onToast }) {
             onChange={(e) => setQuery(e.target.value)}
           />
 
-          {usersLoading && <p className="muted">Loading users…</p>}
+          {usersLoading &&
+            [0, 1, 2].map((i) => <div key={i} className="skeleton skeleton-user" aria-hidden="true" />)}
           {!usersLoading && shownUsers.length === 0 && <p className="muted">No users found</p>}
 
           {shownUsers.map((u) => {
@@ -256,10 +282,10 @@ export default function AdminPanel({ onToast }) {
               <ProgressBar done={selectedSummary.done} total={selectedSummary.total} />
 
               {tasksLoading && tasks.length === 0 ? (
-                <p className="muted">Loading…</p>
+                <TaskSkeleton />
               ) : (
                 <TaskBoard
-                  tasks={tasks}
+                  tasks={visibleTasks}
                   onMove={handleMove}
                   onAdd={(status) => setModal({ status })}
                   onEdit={(task) => setModal({ task })}
@@ -286,6 +312,27 @@ export default function AdminPanel({ onToast }) {
           submitLabel={`Create for ${users.length} users`}
           onSave={addToAllUsers}
           onClose={() => setBulkOpen(false)}
+        />
+      )}
+
+      {pendingBulk && (
+        <ConfirmDialog
+          title="Add this task to everyone?"
+          message={`"${pendingBulk.title}" will be created for all ${users.length} users.`}
+          confirmLabel="Yes, create"
+          onConfirm={confirmBulk}
+          onCancel={() => setPendingBulk(null)}
+        />
+      )}
+
+      {confirmTask && (
+        <ConfirmDialog
+          title="Delete this task?"
+          message={`"${confirmTask.title}" will be removed in a few seconds. You can undo before then.`}
+          confirmLabel="Delete"
+          danger
+          onConfirm={confirmDelete}
+          onCancel={() => setConfirmTask(null)}
         />
       )}
     </>

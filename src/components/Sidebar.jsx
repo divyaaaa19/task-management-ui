@@ -1,4 +1,13 @@
-export default function Sidebar({ user, search, onSearch, onLogout, onOpenProfile, view, onView, isAdmin }) {
+export default function Sidebar({
+  user,
+  search,
+  onSearch,
+  onLogout,
+  onOpenProfile,
+  view,
+  onView,
+  isAdmin,
+}) {
   const initials = user.name
     .split(' ')
     .map((part) => part[0])
