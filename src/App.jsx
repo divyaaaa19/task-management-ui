@@ -7,6 +7,15 @@ import TaskModal from './components/TaskModal';
 import './App.css';
 import ProfileModal from './components/ProfileModal';
 import AdminPanel from './components/AdminPanel';
+import ProgressBar from './components/ProgressBar';
+import ActivityPanel from './components/ActivityPanel';
+
+function greeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
 
 export default function App() {
   const [auth, setAuth] = useState(() => session.get());
@@ -110,6 +119,7 @@ export default function App() {
 
   const isAdmin = roleFromToken(auth.token) === 'ADMIN';
   const showAdmin = isAdmin && view === 'admin';
+  const showActivity = isAdmin && view === 'activity';
 
   const stats = summary && [
     ['Total', summary.total],
@@ -135,10 +145,17 @@ export default function App() {
       <main className="main">
         {showAdmin ? (
           <AdminPanel onToast={showToast} />
+        ) : showActivity ? (
+          <ActivityPanel />
         ) : (
           <>
         <header className="page-header">
-          <h1>Tasks</h1>
+          <div>
+            <h1>Tasks</h1>
+            <p className="subtitle">
+              {greeting()}, {auth.user.name.split(' ')[0]}
+            </p>
+          </div>
           <div className="page-actions">
             <select value={priority} onChange={(e) => setPriority(e.target.value)}>
               <option value="">All priorities</option>
@@ -163,6 +180,8 @@ export default function App() {
             ))}
           </div>
         )}
+
+        {summary && <ProgressBar done={summary.done} total={summary.total} />}
 
         {error && <div className="banner error">{error}</div>}
 

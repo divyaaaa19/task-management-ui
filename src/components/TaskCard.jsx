@@ -8,11 +8,21 @@ function formatDate(iso) {
   });
 }
 
+// Overdue = due before today (local date) and not done
+function isOverdue(task) {
+  if (task.status === 'DONE') return false;
+  const d = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const today = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  return task.dueDate < today;
+}
+
 export default function TaskCard({ task, onDragStart, onEdit, onDelete }) {
   const priority = task.priority.toLowerCase();
+  const overdue = isOverdue(task);
 
   return (
-    <article className="task-card" draggable onDragStart={onDragStart}>
+    <article className={`task-card${overdue ? ' overdue' : ''}`} draggable onDragStart={onDragStart}>
       <div className="task-top">
         <span className="label">#{task.id.slice(-5)}</span>
         <div className="card-actions">
@@ -26,6 +36,7 @@ export default function TaskCard({ task, onDragStart, onEdit, onDelete }) {
 
       <div className="task-foot">
         <span className={`pill ${priority}`}>⚑ {PRIORITY_LABEL[task.priority]}</span>
+        {overdue && <span className="pill overdue">Overdue</span>}
         <span className="pill date">◷ {formatDate(task.dueDate)}</span>
       </div>
     </article>

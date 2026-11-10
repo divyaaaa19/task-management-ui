@@ -2,6 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { adminApi } from '../api/taskApi';
 import TaskBoard from './TaskBoard';
 import TaskModal from './TaskModal';
+import ProgressBar from './ProgressBar';
+
+// Gives each user a stable color, so the same person always gets the same avatar
+function avatarColor(name = '') {
+  let hue = 0;
+  for (const ch of name) hue = (hue * 31 + ch.charCodeAt(0)) % 360;
+  return `hsl(${hue} 65% 52%)`;
+}
 
 function initials(name = '') {
   return name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase();
@@ -184,7 +192,9 @@ export default function AdminPanel({ onToast }) {
                 className={`user-row ${selected?.id === u.id ? 'active' : ''}`}
                 onClick={() => selectUser(u)}
               >
-                <div className="avatar">{initials(u.name)}</div>
+                <div className="avatar" style={{ background: avatarColor(u.name) }}>
+                  {initials(u.name)}
+                </div>
                 <div className="user-meta">
                   <strong>
                     {u.name}
@@ -214,7 +224,9 @@ export default function AdminPanel({ onToast }) {
           ) : (
             <>
               <div className="user-hero">
-                <div className="avatar big">{initials(selected.name)}</div>
+                <div className="avatar big" style={{ background: avatarColor(selected.name) }}>
+                  {initials(selected.name)}
+                </div>
                 <div className="user-hero-text">
                   <h2>{selected.name}</h2>
                   <small>{selected.email}</small>
@@ -240,6 +252,8 @@ export default function AdminPanel({ onToast }) {
                   </div>
                 ))}
               </div>
+
+              <ProgressBar done={selectedSummary.done} total={selectedSummary.total} />
 
               {tasksLoading && tasks.length === 0 ? (
                 <p className="muted">Loading…</p>

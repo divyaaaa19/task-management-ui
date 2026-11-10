@@ -36,6 +36,14 @@ export default function Sidebar({ user, search, onSearch, onLogout, onOpenProfil
             Users (Admin)
           </button>
         )}
+        {isAdmin && (
+          <button
+            className={`nav-item ${view === 'activity' ? 'active' : ''}`}
+            onClick={() => onView('activity')}
+          >
+            Activity (Admin)
+          </button>
+        )}
       </nav>
 
       <div className="sidebar-footer">
