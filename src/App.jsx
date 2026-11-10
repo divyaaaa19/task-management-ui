@@ -8,6 +8,7 @@ import './App.css';
 import ProfileModal from './components/ProfileModal';
 import AdminPanel from './components/AdminPanel';
 import ProgressBar from './components/ProgressBar';
+import ActivityPanel from './components/ActivityPanel';
 
 function greeting() {
   const hour = new Date().getHours();
@@ -118,6 +119,7 @@ export default function App() {
 
   const isAdmin = roleFromToken(auth.token) === 'ADMIN';
   const showAdmin = isAdmin && view === 'admin';
+  const showActivity = isAdmin && view === 'activity';
 
   const stats = summary && [
     ['Total', summary.total],
@@ -143,6 +145,8 @@ export default function App() {
       <main className="main">
         {showAdmin ? (
           <AdminPanel onToast={showToast} />
+        ) : showActivity ? (
+          <ActivityPanel />
         ) : (
           <>
         <header className="page-header">

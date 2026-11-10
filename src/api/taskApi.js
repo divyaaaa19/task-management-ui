@@ -128,4 +128,6 @@ export const adminApi = {
     }),
   remove: (userId, taskId) =>
     request(`${ADMIN_BASE}/users/${userId}/tasks/${taskId}`, { method: 'DELETE' }),
+  // Most recent admin changes first
+  audit: (page = 0) => request(`${ADMIN_BASE}/audit?size=20&page=${page}`),
 };
