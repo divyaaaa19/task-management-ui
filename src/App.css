@@ -1351,3 +1351,12 @@ button.danger:hover:not(:disabled) { background: #b91c1c; }
   background-size: 800px 100%;
 }
 :root[data-theme="dark"] .toast { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); }
+
+/* Dark theme: readable text on dark cards and drop zones */
+:root[data-theme="dark"] .task-card h3 { color: #f3f4f6; }
+:root[data-theme="dark"] .desc,
+:root[data-theme="dark"] .label { color: #9ca3af; }
+:root[data-theme="dark"] .column-head { color: #f3f4f6; }
+:root[data-theme="dark"] .column-head em { color: #9ca3af; }
+:root[data-theme="dark"] .plus { color: #e5e7eb; }
+:root[data-theme="dark"] .column-body .empty { color: #cbd5e1; background: #2a3142; }
