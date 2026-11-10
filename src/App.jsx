@@ -16,6 +16,7 @@ import CalendarView from './components/CalendarView';
 import useUndoableDelete from './hooks/useUndoableDelete';
 import { filterTasks, sortTasks } from './utils/taskFilters';
 
+const THEME_KEY = 'taskflow_theme';
 const LAYOUTS = [
   ['board', 'Board'],
   ['list', 'List'],
@@ -27,6 +28,15 @@ function greeting() {
   if (hour < 12) return 'Good morning';
   if (hour < 17) return 'Good afternoon';
   return 'Good evening';
+}
+
+// Light is the default; dark applies only when the user picks it
+function readTheme() {
+  try {
+    return localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light';
+  } catch {
+    return 'light';
+  }
 }
 
 export default function App() {
@@ -46,6 +56,16 @@ export default function App() {
   const [confirmTask, setConfirmTask] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
   const [view, setView] = useState('tasks'); // 'tasks', 'admin' or 'activity'
+  const [theme, setTheme] = useState(readTheme);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+    } catch {
+      // storage unavailable
+    }
+  }, [theme]);
 
   // options: { duration, action: { label, onClick } } for toasts that need a button
   const showToast = (message, type = 'success', { duration = 3000, action } = {}) => {
@@ -302,6 +322,8 @@ export default function App() {
 
       {showProfile && (
         <ProfileModal
+          theme={theme}
+          onThemeChange={setTheme}
           onClose={() => setShowProfile(false)}
           onUpdated={(user) => {
             session.setUser(user);

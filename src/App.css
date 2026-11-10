@@ -1297,59 +1297,57 @@ button.danger:hover:not(:disabled) { background: #b91c1c; }
   .calendar-task { font-size: .65rem; }
 }
 
-/* ---------- Dark theme: follows the system setting, no toggle ---------- */
-@media (prefers-color-scheme: dark) {
-:root {
+/* ---------- Dark theme: applied only when the user picks Dark ---------- */
+:root[data-theme="dark"] {
   color-scheme: dark;
   color: #e5e7eb;
   background: #0f1219;
 }
-:root body { background: #0f1219; color: #e5e7eb; }
-:root .main,
-:root .admin-main { color: #e5e7eb; }
-:root .subtitle,
-:root .muted,
-:root .user small,
-:root .task-row-main small { color: #9ca3af; }
-:root .stat,
-:root .column,
-:root .task-card,
-:root .task-row,
-:root .calendar,
-:root .skeleton-card,
-:root .user-row,
-:root .modal,
-:root .empty-state {
+:root[data-theme="dark"] body { background: #0f1219; color: #e5e7eb; }
+:root[data-theme="dark"] .main,
+:root[data-theme="dark"] .admin-main { color: #e5e7eb; }
+:root[data-theme="dark"] .subtitle,
+:root[data-theme="dark"] .muted,
+:root[data-theme="dark"] .user small,
+:root[data-theme="dark"] .task-row-main small { color: #9ca3af; }
+:root[data-theme="dark"] .stat,
+:root[data-theme="dark"] .column,
+:root[data-theme="dark"] .task-card,
+:root[data-theme="dark"] .task-row,
+:root[data-theme="dark"] .calendar,
+:root[data-theme="dark"] .skeleton-card,
+:root[data-theme="dark"] .user-row,
+:root[data-theme="dark"] .modal,
+:root[data-theme="dark"] .empty-state {
   background: #171c27;
   color: #e5e7eb;
   border-color: #2a3142;
 }
-:root .column-head,
-:root .column-body { background: #1b2130; color: #e5e7eb; }
-:root .calendar-day { background: #1b2130; }
-:root .calendar-task { background: #2b3456; color: #c7d2fe; }
-:root .calendar-task.done { background: #14372a; color: #bbf7d0; }
-:root .calendar-weekday,
-:root .calendar-date,
-:root .status-tag { color: #9ca3af; }
-:root .segmented { background: #1f2636; }
-:root .segmented button { color: #9ca3af; }
-:root .segmented button.active { background: #2a3142; color: #a5b4fc; }
-:root .search,
-:root select,
-:root input,
-:root textarea {
+:root[data-theme="dark"] .column-head,
+:root[data-theme="dark"] .column-body { background: #1b2130; color: #e5e7eb; }
+:root[data-theme="dark"] .calendar-day { background: #1b2130; }
+:root[data-theme="dark"] .calendar-task { background: #2b3456; color: #c7d2fe; }
+:root[data-theme="dark"] .calendar-task.done { background: #14372a; color: #bbf7d0; }
+:root[data-theme="dark"] .calendar-weekday,
+:root[data-theme="dark"] .calendar-date,
+:root[data-theme="dark"] .status-tag { color: #9ca3af; }
+:root[data-theme="dark"] .segmented { background: #1f2636; }
+:root[data-theme="dark"] .segmented button { color: #9ca3af; }
+:root[data-theme="dark"] .segmented button.active { background: #2a3142; color: #a5b4fc; }
+:root[data-theme="dark"] .search,
+:root[data-theme="dark"] select,
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] textarea {
   background: #1b2130;
   color: #e5e7eb;
   border-color: #2a3142;
 }
-:root button.outline { background: #171c27; color: #a5b4fc; border-color: #3b4560; }
-:root button.outline:hover { background: #1f2636; }
-:root button.secondary { background: #242b3d; color: #e5e7eb; }
-:root .pill.date { background: #242b3d; color: #cbd5e1; }
-:root .skeleton {
+:root[data-theme="dark"] button.outline { background: #171c27; color: #a5b4fc; border-color: #3b4560; }
+:root[data-theme="dark"] button.outline:hover { background: #1f2636; }
+:root[data-theme="dark"] button.secondary { background: #242b3d; color: #e5e7eb; }
+:root[data-theme="dark"] .pill.date { background: #242b3d; color: #cbd5e1; }
+:root[data-theme="dark"] .skeleton {
   background: linear-gradient(90deg, #1f2636 25%, #2a3142 37%, #1f2636 63%);
   background-size: 800px 100%;
 }
-:root .toast { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); }
-}
+:root[data-theme="dark"] .toast { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); }

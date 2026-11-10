@@ -7,7 +7,7 @@ function initials(name = '') {
   return name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase();
 }
 
-export default function ProfileModal({ onClose, onUpdated }) {
+export default function ProfileModal({ onClose, onUpdated, theme = 'light', onThemeChange }) {
   const [profile, setProfile] = useState(null);
   const [form, setForm] = useState(null);
   const [editing, setEditing] = useState(false);
@@ -84,6 +84,16 @@ export default function ProfileModal({ onClose, onUpdated }) {
             </dl>
 
             {message && <div className="banner success">{message}</div>}
+
+            {onThemeChange && (
+              <label className="appearance">
+                Appearance
+                <select value={theme} onChange={(e) => onThemeChange(e.target.value)}>
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                </select>
+              </label>
+            )}
 
             <div className="modal-actions">
               <button type="button" className="secondary" onClick={onClose}>Close</button>
