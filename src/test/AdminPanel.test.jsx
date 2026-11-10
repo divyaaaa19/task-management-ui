@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AdminPanel from '../components/AdminPanel';
@@ -31,6 +31,9 @@ const tasksByUser = {
   u2: { content: [] },
 };
 
+// Deleting waits out the 5-second undo window before the API call
+const UNDO_WAIT = { timeout: 7000 };
+
 function renderPanel() {
   const onToast = vi.fn();
   render(<AdminPanel onToast={onToast} />);
@@ -41,12 +44,15 @@ async function selectAsha(user) {
   await user.click(await screen.findByRole('button', { name: /Asha Rao/ }));
 }
 
+function dialog() {
+  return within(screen.getByRole('alertdialog'));
+}
+
 describe('AdminPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     adminApi.users.mockResolvedValue(users);
     adminApi.tasks.mockImplementation(async (userId) => tasksByUser[userId]);
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
   });
 
   it('lists users with their task count and overdue count', async () => {
@@ -110,7 +116,7 @@ describe('AdminPanel', () => {
     expect(onToast).toHaveBeenCalledWith('Task created');
   });
 
-  it('deletes a task after confirmation', async () => {
+  it('hides the task at once and deletes it after the undo window', async () => {
     const user = userEvent.setup();
     const { onToast } = renderPanel();
     await selectAsha(user);
@@ -118,25 +124,49 @@ describe('AdminPanel', () => {
     adminApi.remove.mockResolvedValue(null);
 
     await user.click(within(card).getByRole('button', { name: 'Delete task' }));
+    await dialog().findByText(/"Pay rent" will be removed/);
+    await user.click(dialog().getByRole('button', { name: 'Delete' }));
 
-    expect(window.confirm).toHaveBeenCalledWith('Delete this task?');
-    expect(adminApi.remove).toHaveBeenCalledWith('u1', 't1');
-    expect(onToast).toHaveBeenCalledWith('Task deleted');
+    expect(screen.queryByText('Pay rent')).not.toBeInTheDocument();
+    expect(onToast).toHaveBeenCalledWith('Task deleted', 'success', expect.any(Object));
+    expect(adminApi.remove).not.toHaveBeenCalled();
+
+    await waitFor(() => expect(adminApi.remove).toHaveBeenCalledWith('u1', 't1'), UNDO_WAIT);
+  }, 10000);
+
+  it('restores the task when undo is clicked', async () => {
+    const user = userEvent.setup();
+    const { onToast } = renderPanel();
+    await selectAsha(user);
+    const card = (await screen.findByText('Pay rent')).closest('article');
+
+    await user.click(within(card).getByRole('button', { name: 'Delete task' }));
+    await user.click(dialog().getByRole('button', { name: 'Delete' }));
+    expect(screen.queryByText('Pay rent')).not.toBeInTheDocument();
+
+    const undoOptions = onToast.mock.calls.find(([msg]) => msg === 'Task deleted')[2];
+    undoOptions.action.onClick();
+
+    expect(await screen.findByText('Pay rent')).toBeInTheDocument();
+    await new Promise((r) => setTimeout(r, 50));
+    expect(adminApi.remove).not.toHaveBeenCalled();
   });
 
-  it('does not delete when the confirmation is declined', async () => {
+  it('does not delete when the confirmation is cancelled', async () => {
     const user = userEvent.setup();
     renderPanel();
     await selectAsha(user);
     const card = (await screen.findByText('Pay rent')).closest('article');
-    window.confirm.mockReturnValue(false);
 
     await user.click(within(card).getByRole('button', { name: 'Delete task' }));
+    await user.click(dialog().getByRole('button', { name: 'Cancel' }));
 
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(screen.getByText('Pay rent')).toBeInTheDocument();
     expect(adminApi.remove).not.toHaveBeenCalled();
   });
 
-  it('adds the same task to every user', async () => {
+  it('adds the same task to every user after confirmation', async () => {
     const user = userEvent.setup();
     const { onToast } = renderPanel();
     await screen.findByText('3 tasks');
@@ -146,6 +176,7 @@ describe('AdminPanel', () => {
     await user.type(screen.getByLabelText('Title'), 'Team meeting');
     fireEvent.change(screen.getByLabelText('Due date'), { target: { value: '2026-12-01' } });
     await user.click(screen.getByRole('button', { name: 'Create for 2 users' }));
+    await user.click(dialog().getByRole('button', { name: 'Yes, create' }));
 
     expect(adminApi.create).toHaveBeenCalledTimes(2);
     expect(adminApi.create).toHaveBeenCalledWith('u1', expect.objectContaining({ title: 'Team meeting' }));
@@ -163,20 +194,21 @@ describe('AdminPanel', () => {
     await user.type(screen.getByLabelText('Title'), 'Team meeting');
     fireEvent.change(screen.getByLabelText('Due date'), { target: { value: '2026-12-01' } });
     await user.click(screen.getByRole('button', { name: 'Create for 2 users' }));
+    await user.click(dialog().getByRole('button', { name: 'Yes, create' }));
 
     expect(onToast).toHaveBeenCalledWith('Added to 1 users, 1 failed', 'error');
   });
 
-  it('creates nothing when the bulk add is not confirmed', async () => {
+  it('creates nothing when the bulk add is cancelled', async () => {
     const user = userEvent.setup();
     renderPanel();
     await screen.findByText('3 tasks');
-    window.confirm.mockReturnValue(false);
 
     await user.click(screen.getByRole('button', { name: 'Add task to all users' }));
     await user.type(screen.getByLabelText('Title'), 'Team meeting');
     fireEvent.change(screen.getByLabelText('Due date'), { target: { value: '2026-12-01' } });
     await user.click(screen.getByRole('button', { name: 'Create for 2 users' }));
+    await user.click(dialog().getByRole('button', { name: 'Cancel' }));
 
     expect(adminApi.create).not.toHaveBeenCalled();
   });

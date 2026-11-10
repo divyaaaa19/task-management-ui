@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { taskApi, session, roleFromToken } from './api/taskApi';
 import AuthPage from './components/AuthPage';
 import Sidebar from './components/Sidebar';
@@ -9,6 +9,19 @@ import ProfileModal from './components/ProfileModal';
 import AdminPanel from './components/AdminPanel';
 import ProgressBar from './components/ProgressBar';
 import ActivityPanel from './components/ActivityPanel';
+import ConfirmDialog from './components/ConfirmDialog';
+import TaskSkeleton from './components/TaskSkeleton';
+import ListView from './components/ListView';
+import CalendarView from './components/CalendarView';
+import useUndoableDelete from './hooks/useUndoableDelete';
+import { filterTasks, sortTasks } from './utils/taskFilters';
+
+const THEME_KEY = 'taskflow_theme';
+const LAYOUTS = [
+  ['board', 'Board'],
+  ['list', 'List'],
+  ['calendar', 'Calendar'],
+];
 
 function greeting() {
   const hour = new Date().getHours();
@@ -17,23 +30,51 @@ function greeting() {
   return 'Good evening';
 }
 
+// Light is the default; dark applies only when the user picks it
+function readTheme() {
+  try {
+    return localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light';
+  } catch {
+    return 'light';
+  }
+}
+
 export default function App() {
   const [auth, setAuth] = useState(() => session.get());
   const [tasks, setTasks] = useState([]);
   const [summary, setSummary] = useState(null);
   const [search, setSearch] = useState('');
   const [priority, setPriority] = useState('');
+  const [due, setDue] = useState('all'); // 'all' | 'today' | 'overdue'
+  const [sort, setSort] = useState('due'); // 'due' | 'priority' | 'newest'
+  const [layout, setLayout] = useState('board'); // 'board' | 'list' | 'calendar'
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [toast, setToast] = useState(null);
+  const toastTimer = useRef(null);
   const [modal, setModal] = useState(null); // { status } to create, { task } to edit
+  const [confirmTask, setConfirmTask] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
-  const [view, setView] = useState('tasks'); // 'tasks' or 'admin'
+  const [view, setView] = useState('tasks'); // 'tasks', 'admin' or 'activity'
+  const [theme, setTheme] = useState(readTheme);
 
-  const showToast = (message, type = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+    } catch {
+      // storage unavailable
+    }
+  }, [theme]);
+
+  // options: { duration, action: { label, onClick } } for toasts that need a button
+  const showToast = (message, type = 'success', { duration = 3000, action } = {}) => {
+    clearTimeout(toastTimer.current);
+    setToast({ message, type, action });
+    toastTimer.current = setTimeout(() => setToast(null), duration);
   };
+
+  const deletion = useUndoableDelete(showToast);
 
   const logout = useCallback(() => {
     session.clear();
@@ -91,9 +132,20 @@ export default function App() {
   const handleMove = (id, status) =>
     run(() => taskApi.update(id, { status }), 'Task moved');
 
+  // Asks first; the delete itself waits in the undo window after confirming
   const handleDelete = (id) => {
-    if (!window.confirm('Delete this task?')) return;
-    run(() => taskApi.remove(id), 'Task deleted');
+    const task = tasks.find((t) => t.id === id);
+    if (task) setConfirmTask(task);
+  };
+
+  const confirmDelete = () => {
+    const task = confirmTask;
+    setConfirmTask(null);
+    deletion.scheduleDelete({
+      task,
+      remove: (t) => taskApi.remove(t.id),
+      onDone: refresh,
+    });
   };
 
   const handleRollover = async () => {
@@ -129,6 +181,17 @@ export default function App() {
     ['Overdue', summary.overdue],
   ];
 
+  // Tasks waiting in the undo window are hidden; the rest are filtered and sorted
+  const visible = sortTasks(
+    filterTasks(tasks.filter((t) => !deletion.hiddenIds.has(t.id)), due),
+    sort,
+  );
+
+  const handlers = {
+    onEdit: (task) => setModal({ task }),
+    onDelete: handleDelete,
+  };
+
   return (
     <div className="layout">
       <Sidebar
@@ -157,12 +220,34 @@ export default function App() {
             </p>
           </div>
           <div className="page-actions">
-            <select value={priority} onChange={(e) => setPriority(e.target.value)}>
+            <select value={priority} onChange={(e) => setPriority(e.target.value)} aria-label="Priority">
               <option value="">All priorities</option>
               <option value="HIGH">High</option>
               <option value="MEDIUM">Medium</option>
               <option value="LOW">Low</option>
             </select>
+            <select value={due} onChange={(e) => setDue(e.target.value)} aria-label="Due date">
+              <option value="all">Any due date</option>
+              <option value="today">Due today</option>
+              <option value="overdue">Overdue only</option>
+            </select>
+            <select value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort by">
+              <option value="due">Sort: due date</option>
+              <option value="priority">Sort: priority</option>
+              <option value="newest">Sort: newest</option>
+            </select>
+            <div className="segmented" role="group" aria-label="Layout">
+              {LAYOUTS.map(([key, label]) => (
+                <button
+                  key={key}
+                  className={layout === key ? 'active' : ''}
+                  aria-pressed={layout === key}
+                  onClick={() => setLayout(key)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
             <button className="outline" onClick={handleRollover}>Roll over overdue</button>
             <button className="primary" onClick={() => setModal({ status: 'TODO' })}>
               + Add Task
@@ -186,14 +271,18 @@ export default function App() {
         {error && <div className="banner error">{error}</div>}
 
         {loading && tasks.length === 0 ? (
-          <p className="muted">Loading…</p>
+          <TaskSkeleton />
+        ) : layout === 'list' ? (
+          <ListView tasks={visible} {...handlers} />
+        ) : layout === 'calendar' ? (
+          <CalendarView tasks={visible} onEdit={handlers.onEdit} />
         ) : (
           <TaskBoard
-            tasks={tasks}
+            tasks={visible}
             onMove={handleMove}
             onAdd={(status) => setModal({ status })}
-            onEdit={(task) => setModal({ task })}
-            onDelete={handleDelete}
+            onEdit={handlers.onEdit}
+            onDelete={handlers.onDelete}
           />
         )}
           </>
@@ -209,10 +298,32 @@ export default function App() {
         />
       )}
 
-      {toast && <div className={`toast ${toast.type}`}>{toast.message}</div>}
+      {confirmTask && (
+        <ConfirmDialog
+          title="Delete this task?"
+          message={`"${confirmTask.title}" will be removed in a few seconds. You can undo before then.`}
+          confirmLabel="Delete"
+          danger
+          onConfirm={confirmDelete}
+          onCancel={() => setConfirmTask(null)}
+        />
+      )}
+
+      {toast && (
+        <div className={`toast ${toast.type}`} role="status">
+          <span>{toast.message}</span>
+          {toast.action && (
+            <button className="toast-action" onClick={toast.action.onClick}>
+              {toast.action.label}
+            </button>
+          )}
+        </div>
+      )}
 
       {showProfile && (
         <ProfileModal
+          theme={theme}
+          onThemeChange={setTheme}
           onClose={() => setShowProfile(false)}
           onUpdated={(user) => {
             session.setUser(user);
