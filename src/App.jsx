@@ -277,9 +277,12 @@ export default function App() {
             <span>
               ⚠ {overdueCount} {overdueCount === 1 ? 'task is' : 'tasks are'} overdue
             </span>
-            {due !== 'overdue' && (
-              <button className="outline" onClick={() => setDue('overdue')}>Show overdue</button>
-            )}
+            <button
+              className="outline"
+              onClick={() => setDue(due === 'overdue' ? 'all' : 'overdue')}
+            >
+              {due === 'overdue' ? 'Show all tasks' : 'Show overdue'}
+            </button>
           </div>
         )}
 
