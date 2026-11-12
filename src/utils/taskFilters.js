@@ -33,9 +33,13 @@ export function sortTasks(tasks, sort = 'due') {
   return list.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
 }
 
-// Tasks only carry a date, so the deadline is the end of the due day (local time)
-export function deadlineOf(dueDate) {
+// Deadline in local time: the due time if one is set, otherwise the end of the due day
+export function deadlineOf(dueDate, dueTime) {
   const [y, m, d] = dueDate.split('-').map(Number);
+  if (dueTime) {
+    const [hh, mm] = dueTime.split(':').map(Number);
+    return new Date(y, m - 1, d, hh, mm, 0, 0).getTime();
+  }
   return new Date(y, m - 1, d, 23, 59, 59, 999).getTime();
 }
 
@@ -54,7 +58,7 @@ function formatSpan(ms) {
 // tone: 'late' (overdue), 'soon' (under 24 hours) or '' (plenty of time)
 export function timeLeft(task, now = new Date()) {
   if (!task || task.status === 'DONE' || !task.dueDate) return null;
-  const diff = deadlineOf(task.dueDate) - now.getTime();
+  const diff = deadlineOf(task.dueDate, task.dueTime) - now.getTime();
   if (diff < 0) {
     return { overdue: true, tone: 'late', label: `${formatSpan(-diff)} late` };
   }

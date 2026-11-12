@@ -29,6 +29,14 @@ describe('timeLeft', () => {
     });
   });
 
+  it('uses the due time when one is set', () => {
+    expect(timeLeft({ status: 'TODO', dueDate: '2026-11-12', dueTime: '19:00' }, now)).toEqual({
+      overdue: false,
+      tone: 'soon',
+      label: '9h 0m left',
+    });
+  });
+
   it('returns null for done tasks', () => {
     expect(timeLeft({ status: 'DONE', dueDate: '2026-11-01' }, now)).toBeNull();
   });
