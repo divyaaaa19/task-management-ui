@@ -32,3 +32,43 @@ export function sortTasks(tasks, sort = 'due') {
   }
   return list.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
 }
+
+// Tasks only carry a date, so the deadline is the end of the due day (local time)
+export function deadlineOf(dueDate) {
+  const [y, m, d] = dueDate.split('-').map(Number);
+  return new Date(y, m - 1, d, 23, 59, 59, 999).getTime();
+}
+
+// "3d 13h", "13h 59m" or "42m"
+function formatSpan(ms) {
+  const mins = Math.max(0, Math.floor(ms / 60000));
+  const days = Math.floor(mins / 1440);
+  const hours = Math.floor((mins % 1440) / 60);
+  const minutes = mins % 60;
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
+}
+
+// Time left before the task is due, or how late it is. Null for done tasks.
+// tone: 'late' (overdue), 'soon' (under 24 hours) or '' (plenty of time)
+export function timeLeft(task, now = new Date()) {
+  if (!task || task.status === 'DONE' || !task.dueDate) return null;
+  const diff = deadlineOf(task.dueDate) - now.getTime();
+  if (diff < 0) {
+    return { overdue: true, tone: 'late', label: `${formatSpan(-diff)} late` };
+  }
+  if (diff < 60000) return { overdue: false, tone: 'soon', label: 'Due now' };
+  const tone = diff < 24 * 3600000 ? 'soon' : '';
+  return { overdue: false, tone, label: `${formatSpan(diff)} left` };
+}
+
+// Overdue tasks first; the chosen order is kept within each group
+export function overdueFirst(tasks, now = new Date()) {
+  const late = [];
+  const rest = [];
+  for (const t of tasks) {
+    (timeLeft(t, now)?.overdue ? late : rest).push(t);
+  }
+  return [...late, ...rest];
+}

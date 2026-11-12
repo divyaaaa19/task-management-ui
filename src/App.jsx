@@ -14,7 +14,7 @@ import TaskSkeleton from './components/TaskSkeleton';
 import ListView from './components/ListView';
 import CalendarView from './components/CalendarView';
 import useUndoableDelete from './hooks/useUndoableDelete';
-import { filterTasks, sortTasks } from './utils/taskFilters';
+import { filterTasks, sortTasks, overdueFirst, timeLeft } from './utils/taskFilters';
 
 const THEME_KEY = 'taskflow_theme';
 const LAYOUTS = [
@@ -182,10 +182,12 @@ export default function App() {
   ];
 
   // Tasks waiting in the undo window are hidden; the rest are filtered and sorted
-  const visible = sortTasks(
-    filterTasks(tasks.filter((t) => !deletion.hiddenIds.has(t.id)), due),
-    sort,
+  const visible = overdueFirst(
+    sortTasks(filterTasks(tasks.filter((t) => !deletion.hiddenIds.has(t.id)), due), sort),
   );
+  const overdueCount = tasks.filter(
+    (t) => !deletion.hiddenIds.has(t.id) && timeLeft(t)?.overdue,
+  ).length;
 
   const handlers = {
     onEdit: (task) => setModal({ task }),
@@ -269,6 +271,17 @@ export default function App() {
         {summary && <ProgressBar done={summary.done} total={summary.total} />}
 
         {error && <div className="banner error">{error}</div>}
+
+        {overdueCount > 0 && (
+          <div className="overdue-banner" role="alert">
+            <span>
+              ⚠ {overdueCount} {overdueCount === 1 ? 'task is' : 'tasks are'} overdue
+            </span>
+            {due !== 'overdue' && (
+              <button className="outline" onClick={() => setDue('overdue')}>Show overdue</button>
+            )}
+          </div>
+        )}
 
         {loading && tasks.length === 0 ? (
           <TaskSkeleton />

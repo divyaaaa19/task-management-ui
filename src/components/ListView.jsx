@@ -1,3 +1,6 @@
+import TimeLeft from './TimeLeft';
+import { timeLeft } from '../utils/taskFilters';
+
 const PRIORITY_LABEL = { HIGH: 'High', MEDIUM: 'Medium', LOW: 'Low' };
 const STATUS_LABEL = { TODO: 'To Do', IN_PROGRESS: 'In Progress', DONE: 'Done' };
 
@@ -20,13 +23,14 @@ export default function ListView({ tasks, onEdit, onDelete }) {
   return (
     <ul className="task-list">
       {tasks.map((task) => (
-        <li className="task-row" key={task.id}>
+        <li className={`task-row${timeLeft(task)?.overdue ? ' overdue' : ''}`} key={task.id}>
           <div className="task-row-main">
             <strong>{task.title}</strong>
             {task.description && <small>{task.description}</small>}
           </div>
           <span className={`pill ${task.priority.toLowerCase()}`}>{PRIORITY_LABEL[task.priority]}</span>
           <span className="status-tag">{STATUS_LABEL[task.status]}</span>
+          <TimeLeft task={task} />
           <span className="pill date">{formatDate(task.dueDate)}</span>
           <div className="card-actions">
             <button className="icon" onClick={() => onEdit(task)} aria-label="Edit task">✎</button>

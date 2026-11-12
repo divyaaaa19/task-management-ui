@@ -1,3 +1,6 @@
+import TimeLeft from './TimeLeft';
+import { timeLeft } from '../utils/taskFilters';
+
 const PRIORITY_LABEL = { HIGH: 'High', MEDIUM: 'Medium', LOW: 'Low' };
 
 function formatDate(iso) {
@@ -8,18 +11,9 @@ function formatDate(iso) {
   });
 }
 
-// Overdue = due before today (local date) and not done
-function isOverdue(task) {
-  if (task.status === 'DONE') return false;
-  const d = new Date();
-  const pad = (n) => String(n).padStart(2, '0');
-  const today = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-  return task.dueDate < today;
-}
-
 export default function TaskCard({ task, onDragStart, onEdit, onDelete }) {
   const priority = task.priority.toLowerCase();
-  const overdue = isOverdue(task);
+  const overdue = Boolean(timeLeft(task)?.overdue);
 
   return (
     <article className={`task-card${overdue ? ' overdue' : ''}`} draggable onDragStart={onDragStart}>
@@ -37,6 +31,7 @@ export default function TaskCard({ task, onDragStart, onEdit, onDelete }) {
       <div className="task-foot">
         <span className={`pill ${priority}`}>⚑ {PRIORITY_LABEL[task.priority]}</span>
         {overdue && <span className="pill overdue">Overdue</span>}
+        <TimeLeft task={task} />
         <span className="pill date">◷ {formatDate(task.dueDate)}</span>
       </div>
     </article>
