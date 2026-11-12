@@ -1201,7 +1201,7 @@ button.danger:hover:not(:disabled) { background: #b91c1c; }
 .task-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
 .task-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto auto auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto auto auto;
   align-items: center;
   gap: 12px;
   background: #fff;
@@ -1360,3 +1360,30 @@ button.danger:hover:not(:disabled) { background: #b91c1c; }
 :root[data-theme="dark"] .column-head em { color: #9ca3af; }
 :root[data-theme="dark"] .plus { color: #e5e7eb; }
 :root[data-theme="dark"] .column-body .empty { color: #cbd5e1; background: #2a3142; }
+
+/* ---------- Deadline timer and overdue highlight ---------- */
+.pill.timer { background: #eef2ff; color: #4338ca; font-weight: 600; }
+.pill.timer.soon { background: #fffbeb; color: #b45309; }
+.pill.timer.late { background: #fef2f2; color: #b91c1c; }
+.task-row.overdue { box-shadow: inset 4px 0 0 #ef4444, 0 1px 2px rgba(0, 0, 0, 0.05); }
+.overdue-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+@media (max-width: 900px) {
+  .task-row .pill.timer { justify-self: start; }
+}
+:root[data-theme="dark"] .pill.timer { background: #2b3456; color: #c7d2fe; }
+:root[data-theme="dark"] .pill.timer.soon { background: #3d3217; color: #fde68a; }
+:root[data-theme="dark"] .pill.timer.late { background: #4a1d1d; color: #fecaca; }
+:root[data-theme="dark"] .overdue-banner { background: #3a1616; color: #fecaca; border-color: #7f1d1d; }

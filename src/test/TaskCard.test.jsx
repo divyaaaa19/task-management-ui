@@ -19,13 +19,14 @@ function renderCard(overrides = {}) {
 }
 
 describe('TaskCard', () => {
-  it('shows the title, description, priority and due date', () => {
+  it('shows the title, description, priority and countdown', () => {
     renderCard();
 
     expect(screen.getByRole('heading', { name: 'Write docs' })).toBeInTheDocument();
     expect(screen.getByText('Cover the API')).toBeInTheDocument();
     expect(screen.getByText('⚑ High')).toBeInTheDocument();
-    expect(screen.getByText('◷ 5 March')).toBeInTheDocument();
+    // The task is due in the past, so the countdown reads "... late"
+    expect(screen.getByText(/ late$/)).toBeInTheDocument();
   });
 
   it('shows the last five characters of the id as the label', () => {

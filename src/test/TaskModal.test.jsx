@@ -28,6 +28,7 @@ describe('TaskModal', () => {
       priority: 'MEDIUM',
       status: 'TODO',
       dueDate: '2026-12-05',
+      dueTime: null,
     });
   });
 
@@ -67,6 +68,7 @@ describe('TaskModal', () => {
       priority: 'HIGH',
       status: 'IN_PROGRESS',
       dueDate: '2026-12-01',
+      dueTime: null,
     });
   });
 

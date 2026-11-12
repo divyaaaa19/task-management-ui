@@ -7,6 +7,7 @@ export default function TaskModal({ task, defaultStatus = 'TODO', onSave, onClos
     priority: task?.priority ?? 'MEDIUM',
     status: task?.status ?? defaultStatus,
     dueDate: task?.dueDate ?? '',
+    dueTime: task?.dueTime ? task.dueTime.slice(0, 5) : '', // HH:mm; blank means end of the day
   });
 
   const set = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
@@ -14,7 +15,7 @@ export default function TaskModal({ task, defaultStatus = 'TODO', onSave, onClos
   function submit(e) {
     e.preventDefault();
     if (!form.title.trim() || !form.dueDate) return;
-    onSave({ ...form, title: form.title.trim() });
+    onSave({ ...form, title: form.title.trim(), dueTime: form.dueTime || null });
   }
 
   return (
@@ -52,10 +53,17 @@ export default function TaskModal({ task, defaultStatus = 'TODO', onSave, onClos
           </label>
         </div>
 
-        <label>
-          Due date
-          <input type="date" value={form.dueDate} onChange={set('dueDate')} required />
-        </label>
+        <div className="modal-row">
+          <label>
+            Due date
+            <input type="date" value={form.dueDate} onChange={set('dueDate')} required />
+          </label>
+
+          <label>
+            Due time (optional)
+            <input type="time" value={form.dueTime} onChange={set('dueTime')} />
+          </label>
+        </div>
 
         <div className="modal-actions">
           <button type="button" className="secondary" onClick={onClose}>Cancel</button>
