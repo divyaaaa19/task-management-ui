@@ -43,13 +43,13 @@ export function deadlineOf(dueDate, dueTime) {
   return new Date(y, m - 1, d, 23, 59, 59, 999).getTime();
 }
 
-// "3d 13h", "13h 59m" or "42m"
+// "3d 13h 59m", "13h 59m" or "42m"
 function formatSpan(ms) {
   const mins = Math.max(0, Math.floor(ms / 60000));
   const days = Math.floor(mins / 1440);
   const hours = Math.floor((mins % 1440) / 60);
   const minutes = mins % 60;
-  if (days > 0) return `${days}d ${hours}h`;
+  if (days > 0) return `${days}d ${hours}h ${minutes}m`;
   if (hours > 0) return `${hours}h ${minutes}m`;
   return `${minutes}m`;
 }

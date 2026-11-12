@@ -17,7 +17,7 @@ describe('timeLeft', () => {
     expect(timeLeft({ status: 'TODO', dueDate: '2026-11-15' }, now)).toEqual({
       overdue: false,
       tone: '',
-      label: '3d 13h left',
+      label: '3d 13h 59m left',
     });
   });
 
@@ -25,7 +25,7 @@ describe('timeLeft', () => {
     expect(timeLeft({ status: 'IN_PROGRESS', dueDate: '2026-11-10' }, now)).toEqual({
       overdue: true,
       tone: 'late',
-      label: '1d 10h late',
+      label: '1d 10h 0m late',
     });
   });
 
